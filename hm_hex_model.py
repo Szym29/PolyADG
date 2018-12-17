@@ -26,7 +26,7 @@ Hex = True
 ############ **************** ############
 
 tf.app.flags.DEFINE_string(
-    'train_dir', None,
+    'train_dir', not None,
     'Directory where checkpoints are written to.')
 
 tf.app.flags.DEFINE_integer(
@@ -149,6 +149,13 @@ def train(dataset, hyper_dict):
         #mlp_2_biases = tf.Variable(tf.constant(1.0, shape=[512]))
         #mlp_3_biases = tf.Variable(tf.constant(1.0, shape=[32]))
         concat_biases = tf.Variable(tf.constant(1.0, shape = [2]))
+        lstm_biases = tf.Variable(tf.constant(1.0, shape=[32]))
+        lstm_weights = tf.Variable(tf.truncated_normal(
+            [896, 32], stddev=tf_mlp_init_weight))
+
+        #lstm
+        lstm = tf.nn.rnn_cell.BasicLSTMCell(32)
+        #lstm = tf.nn.rnn.DropoutWrapper(cell=lstm, input_keep_prob=1.0, output_keep_prob=tf_keep_prob)
 
         # Store Variables
         weights = {}
@@ -171,9 +178,15 @@ def train(dataset, hyper_dict):
         # Model.
         def model(data, label,Hex = True, drop=True):
             #MLP
-            mlp_1 = tf.nn.relu(tf.matmul(tf.reshape(data,[data.shape[0], -1]),mlp_1_weights) + mlp_1_biases)
+            #mlp_1 = tf.nn.relu(tf.matmul(tf.reshape(data,[data.shape[0], -1]),mlp_1_weights) + mlp_1_biases)
             #mlp_2 = tf.nn.relu(tf.matmul(mlp_1,mlp_2_weights) + mlp_2_biases)
             #mlp_3 = tf.nn.relu(tf.matmul(mlp_2,mlp_3_weights) + mlp_3_biases)
+
+            #LSTM
+            lstm_layer, state1 = tf.nn.dynamic_rnn(lstm,tf.transpose(tf.reshape(data,[data.shape[0],data.shape[1], -1]),[1,0,2]),dtype=tf.float32,time_major=True)
+            print(lstm_layer.shape)
+            lstm_out = tf.nn.relu(lstm_layer[-1])
+
 
             #CNN
             conv = tf.nn.conv2d(data, conv_weights, [1, 1, 1, 1], padding='VALID')
@@ -192,13 +205,13 @@ def train(dataset, hyper_dict):
                 hidden_nodes = tf.nn.relu(tf.matmul(motif_score, layer1_weights) + layer1_biases)
 
             
-            concat_loss = tf.concat([hidden_nodes,mlp_1], 1)
+            concat_loss = tf.concat([hidden_nodes,lstm_out], 1)
 
-            pad = tf.zeros_like(mlp_1, tf.float32)
+            pad = tf.zeros_like(lstm_out, tf.float32)
             concat_pred = tf.concat([hidden_nodes, pad], 1)
 
             pad2 = tf.zeros_like(hidden_nodes, tf.float32)
-            concat_H = tf.concat([pad2, mlp_1], 1)
+            concat_H = tf.concat([pad2, lstm_out], 1)
             model_loss = tf.matmul(concat_loss, concat_weights) + concat_biases
             model_pred = tf.matmul(concat_pred, concat_weights) + concat_biases
             model_H = tf.matmul(concat_H, concat_weights) + concat_biases
@@ -340,7 +353,7 @@ def main(_):
 
         # Dump model
         if FLAGS.train_dir is not None:
-            with open(os.path.join(FLAGS.train_dir,  'cv%d_model.pkl'%i), 'wb') as f:
+            with open(os.path.join('/home/zzym/polyA_HEX/weights',  'cv%d_model.pkl'%i), 'wb') as f:
                 pickle.dump(save_weights, f, 2)
 
         train_accuracy_split.append(train_resuts[-1])
@@ -363,7 +376,7 @@ def main(_):
         print('*%s* accuracy: %.1f%%' % (motif, motif_test_accuracy[motif]))
 
     if FLAGS.training_result_dir is not None:
-        with open(os.path.join(FLAGS.training_result_dir, 'result.pkl'), 'wb') as f:
+        with open(os.path.join('/home/zzym/polyA_HEX/hyper', 'result.pkl'), 'wb') as f:
             hyper_dict['train_accuracy'] = train_accuracy
             hyper_dict['valid_accuracy'] = valid_accuracy
             hyper_dict['test_accuracy'] = test_accuracy
