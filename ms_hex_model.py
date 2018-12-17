@@ -134,16 +134,16 @@ def train(dataset, hyper_dict):
         layer2_biases = tf.Variable(tf.constant(1.0, shape=[NUM_LABELS]))
 
         mlp_1_weights = tf.Variable(tf.truncated_normal(
-            [896,3000],stddev = tf_mlp_init_weight))
-        mlp_2_weights = tf.Variable(tf.truncated_normal(
-            [3000, 512],stddev = tf_mlp_init_weight))
-        mlp_3_weights = tf.Variable(tf.truncated_normal(
-            [512, 32],stddev = tf_mlp_init_weight))
+            [896,32],stddev = tf_mlp_init_weight))
+        #mlp_2_weights = tf.Variable(tf.truncated_normal(
+        #    [3000, 512],stddev = tf_mlp_init_weight))
+        #mlp_3_weights = tf.Variable(tf.truncated_normal(
+        #    [512, 32],stddev = tf_mlp_init_weight))
         concat_weights = tf.Variable(tf.truncated_normal(
             [32 + NUM_HIDDEN, NUM_LABELS],stddev = tf_concat_init_weight))
-        mlp_1_biases = tf.Variable(tf.constant(1.0, shape=[3000]))
-        mlp_2_biases = tf.Variable(tf.constant(1.0, shape=[512]))
-        mlp_3_biases = tf.Variable(tf.constant(1.0, shape=[32]))
+        mlp_1_biases = tf.Variable(tf.constant(1.0, shape=[32]))
+        #mlp_2_biases = tf.Variable(tf.constant(1.0, shape=[512]))
+        #mlp_3_biases = tf.Variable(tf.constant(1.0, shape=[32]))
         concat_biases = tf.Variable(tf.constant(1.0, shape = [2]))
         #w = pickle.load(open('weights/cv3_model.pkl','rb'))    #load weights
         #print('chekchehf',len(w))
@@ -164,11 +164,11 @@ def train(dataset, hyper_dict):
         weights['layer2_weights'] = layer2_weights
         weights['layer2_biases'] = layer2_biases
         weights['mlp_1_weights'] = mlp_1_weights
-        weights['mlp_2_weights'] = mlp_2_weights
-        weights['mlp_3_weights'] = mlp_3_weights
+        #weights['mlp_2_weights'] = mlp_2_weights
+        #weights['mlp_3_weights'] = mlp_3_weights
         weights['mlp_1_biases'] = mlp_1_biases
-        weights['mlp_2_biases'] = mlp_2_biases
-        weights['mlp_3_biases'] = mlp_3_biases
+        #weights['mlp_2_biases'] = mlp_2_biases
+        #weights['mlp_3_biases'] = mlp_3_biases
         weights['concat_weights'] = concat_weights
         weights['concat_biases'] = concat_biases
 
@@ -178,8 +178,8 @@ def train(dataset, hyper_dict):
         def model(data, label, Hex = True, drop=True):
             #MLP
             mlp_1 = tf.nn.relu(tf.matmul(tf.reshape(data,[data.shape[0], -1]),mlp_1_weights) + mlp_1_biases)
-            mlp_2 = tf.nn.relu(tf.matmul(mlp_1,mlp_2_weights) + mlp_2_biases)
-            mlp_3 = tf.nn.relu(tf.matmul(mlp_2,mlp_3_weights) + mlp_3_biases)
+            #mlp_2 = tf.nn.relu(tf.matmul(mlp_1,mlp_2_weights) + mlp_2_biases)
+            #mlp_3 = tf.nn.relu(tf.matmul(mlp_2,mlp_3_weights) + mlp_3_biases)
 
             #CNN
             conv = tf.nn.conv2d(data, conv_weights, [1, 1, 1, 1], padding='VALID')
@@ -197,14 +197,14 @@ def train(dataset, hyper_dict):
                 hidden_nodes = tf.nn.relu(tf.matmul(motif_score, layer1_weights) + layer1_biases)
 
 
-            concat_loss = tf.concat([hidden_nodes, mlp_3], 1)
+            concat_loss = tf.concat([hidden_nodes, mlp_1], 1)
 
-            pad = tf.zeros_like(mlp_3, tf.float32)
+            pad = tf.zeros_like(mlp_1, tf.float32)
 
             concat_pred = tf.concat([hidden_nodes, pad], 1)
 
             pad2 = tf.zeros_like(hidden_nodes, tf.float32)
-            concat_H = tf.concat([pad2, mlp_3], 1)
+            concat_H = tf.concat([pad2, mlp_1], 1)
             model_loss = tf.matmul(concat_loss, concat_weights) + concat_biases
             model_pred = tf.matmul(concat_pred, concat_weights) + concat_biases
             model_H = tf.matmul(concat_H, concat_weights) + concat_biases
