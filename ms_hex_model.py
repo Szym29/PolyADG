@@ -63,12 +63,12 @@ def gen_hyper_dict(hyper_dict=None):
         hyper_dict = {
             'tf_learning_rate': 0.004793020077587054,
             'tf_momentum': 0.9829484057595264,
-            'tf_motif_init_weight': 5.731596189331555,
-            'tf_fc_init_weight': 0.02237206407956654,
-            'tf_motif_weight_decay': 0.0001518983965598543,
-            'tf_fc_weight_decay': 3.122313707573144e-05,
-            'tf_keep_prob': 0.5,
-            'tf_ngroups': 4,
+            'tf_motif_init_weight': rand_log(1e-2, 10),
+            'tf_fc_init_weight': rand_log(1e-2, 10),
+            'tf_motif_weight_decay': rand_log(1e-5, 1e-3),
+            'tf_fc_weight_decay': rand_log(1e-5, 1e-3),
+            'tf_keep_prob': np.random.choice([.5, .75, 1.0]),
+            'tf_ngroups': np.random.choice([2,4,8]),
             'tf_mlp_init_weight': rand_log(1e-2,10),
             'tf_concat_init_weight': rand_log(1e-2,10)
         }
