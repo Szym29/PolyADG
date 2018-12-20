@@ -183,10 +183,10 @@ def train(dataset, hyper_dict):
             #mlp_3 = tf.nn.relu(tf.matmul(mlp_2,mlp_3_weights) + mlp_3_biases)
 
             #LSTM
-            lstm_layer, state1 = tf.nn.dynamic_rnn(lstm,tf.transpose(tf.reshape(data,[data.shape[0],data.shape[1], -1]),[1,0,2]),dtype=tf.float32,time_major=True)
+            lstm_layer, state1 = tf.nn.dynamic_rnn(lstm,tf.reshape(data,[data.shape[0],data.shape[1], -1]),dtype=tf.float32,time_major=True)
             print(lstm_layer.shape)
-            lstm_out = tf.nn.relu(lstm_layer[-1])
-
+            #lstm_out = tf.nn.relu(lstm_layer[:, -1, :])
+            lstm_out = tf.math.tanh(lstm_layer[:, -1, :])
 
             #CNN
             conv = tf.nn.conv2d(data, conv_weights, [1, 1, 1, 1], padding='VALID')
