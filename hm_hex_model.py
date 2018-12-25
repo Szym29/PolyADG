@@ -363,8 +363,8 @@ def main(_):
     valid_accuracy_split = []
     test_1_accuracy_split = []
     test_2_accuracy_split = []
-    motif_test_1_accuracy_split = {motif: [] for motif in HUMAN_MOTIF_VARIANTS}
-    motif_test_2_accuracy_split = {motif: [] for motif in HUMAN_MOTIF_VARIANTS}
+    motif_test_1_accuracy_split = {motif: [] for motif in MOUSE_MOTIF_VARIANTS}
+    motif_test_2_accuracy_split = {motif: [] for motif in MOUSE_MOTIF_VARIANTS}
 
     for i in range(NUM_FOLDS):
         split =  {
@@ -383,7 +383,7 @@ def main(_):
         test_1['test_dataset'], test_1['test_labels'] = pad_dataset(save_1['test_dataset'], save_1['test_labels'])
 
         test_1['motif_dataset'] = {}
-        for motif in HUMAN_MOTIF_VARIANTS:
+        for motif in MOUSE_MOTIF_VARIANTS:
             test_1['motif_dataset'][motif] = {}
             test_1['motif_dataset'][motif]['test_dataset'], test_1['motif_dataset'][motif]['test_labels'] = pad_dataset(save_1['motif_dataset'][motif]['test_dataset'], save_1['motif_dataset'][motif]['test_labels'])
 
@@ -394,7 +394,7 @@ def main(_):
         test_2['test_dataset'], test_2['test_labels'] = pad_dataset(save_2['test_dataset'], save_2['test_labels'])
         
         test_2['motif_dataset'] = {}
-        for motif in HUMAN_MOTIF_VARIANTS:
+        for motif in MOUSE_MOTIF_VARIANTS:
             test_2['motif_dataset'][motif] = {}
             test_2['motif_dataset'][motif]['test_dataset'], test_2['motif_dataset'][motif]['test_labels'] = pad_dataset(save_2['motif_dataset'][motif]['test_dataset'], save_2['motif_dataset'][motif]['test_labels'])
 
@@ -416,10 +416,10 @@ def main(_):
         print("Test_1 accuracy: %.2f%%"%test_1_results[-1])
         print("Test_2 accuracy: %.2f%%"%test_2_results[-1])
         print("Validation accuracy: %.2f%%"%valid_results[-1])
-        print("MOUSE_1..............")
+        print("MOUSE_SP..............")
         for motif in MOUSE_MOTIF_VARIANTS:
             print('*%s* accuracy: %.1f%%' % (motif, motif_test_1_results[motif][-1]))
-        print("MOUSE_2..............")
+        print("MOUSE_BL..............")
         for motif in MOUSE_MOTIF_VARIANTS:
             print('*%s* accuracy: %.1f%%' % (motif, motif_test_2_results[motif][-1]))
 
@@ -440,7 +440,8 @@ def main(_):
     valid_accuracy = np.mean(valid_accuracy_split)
     test_1_accuracy = np.mean(test_1_accuracy_split)
     test_2_accuracy = np.mean(test_2_accuracy_split)
-    motif_test_accuracy = {}
+    motif_test_1_accuracy = {}
+    motif_test_2_accuracy = {}
     for motif in MOUSE_MOTIF_VARIANTS:
         motif_test_1_accuracy[motif] = np.mean(motif_test_1_accuracy_split[motif])
         motif_test_2_accuracy[motif] = np.mean(motif_test_2_accuracy_split[motif])
@@ -449,11 +450,11 @@ def main(_):
     print('Validation accuracy: %.1f%%' % (valid_accuracy))
     print('Test_1 accuracy: %.1f%%' % (test_1_accuracy ))
     print('Test_2 accuracy: %.1f%%' % (test_2_accuracy ))
-    print("MOUSE_1..............")
+    print("MOUSE_SP..............")
     for motif in MOUSE_MOTIF_VARIANTS:
         print('*%s* accuracy: %.1f%%' % (motif, motif_test_1_accuracy[motif]))
 
-    print("MOUSE_2..............")
+    print("MOUSE_BL..............")
     for motif in MOUSE_MOTIF_VARIANTS:
         print('*%s* accuracy: %.1f%%' % (motif, motif_test_2_accuracy[motif]))    
 
