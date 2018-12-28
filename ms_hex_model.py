@@ -10,7 +10,7 @@ from ms_prep import *
 #NEG_PATH = 'data/mouse/sp_mouse/negative/'
 POS_PATH = 'data/mouse/bl_mouse/positive/'
 NEG_PATH = 'data/mouse/bl_mouse/negative/'
-BATCH_SIZE = 64
+BATCH_SIZE = 32
 PATCH_SIZE = 10
 DEPTH = 16
 NUM_HIDDEN = 64
@@ -128,26 +128,26 @@ def train(dataset, hyper_dict):
         conv_biases = tf.Variable(tf.zeros([DEPTH]))
         layer1_weights = tf.Variable(tf.truncated_normal(
           [21*DEPTH, NUM_HIDDEN], stddev=1e-1))
-        layer1_biases = tf.Variable(tf.constant(1.0, shape=[NUM_HIDDEN]))
+        layer1_biases = tf.Variable(tf.constant(0.0, shape=[NUM_HIDDEN]))
         layer2_weights = tf.Variable(tf.truncated_normal(
             [NUM_HIDDEN, NUM_LABELS], stddev=1e-1))
-        layer2_biases = tf.Variable(tf.constant(1.0, shape=[NUM_LABELS]))
+        layer2_biases = tf.Variable(tf.constant(0.0, shape=[NUM_LABELS]))
 
         mlp_1_weights = tf.Variable(tf.truncated_normal(
-            [896,32],stddev = tf_mlp_init_weight))
+            [896,32],stddev = 1e-1))
         #mlp_2_weights = tf.Variable(tf.truncated_normal(
         #    [3000, 512],stddev = tf_mlp_init_weight))
         #mlp_3_weights = tf.Variable(tf.truncated_normal(
         #    [512, 32],stddev = tf_mlp_init_weight))
         concat_weights = tf.Variable(tf.truncated_normal(
-            [32 + NUM_HIDDEN, NUM_LABELS],stddev = tf_concat_init_weight))
-        mlp_1_biases = tf.Variable(tf.constant(1.0, shape=[32]))
+            [32 + NUM_HIDDEN, NUM_LABELS],stddev = 1e-1))
+        mlp_1_biases = tf.Variable(tf.constant(0.0, shape=[32]))
         #mlp_2_biases = tf.Variable(tf.constant(1.0, shape=[512]))
         #mlp_3_biases = tf.Variable(tf.constant(1.0, shape=[32]))
-        concat_biases = tf.Variable(tf.constant(1.0, shape = [2]))
-        lstm_biases = tf.Variable(tf.constant(1.0, shape=[32]))
+        concat_biases = tf.Variable(tf.constant(0.0, shape = [2]))
+        lstm_biases = tf.Variable(tf.constant(0.0, shape=[32]))
         lstm_weights = tf.Variable(tf.truncated_normal(
-            [896, 32], stddev=tf_mlp_init_weight))
+            [896, 32], stddev=1e-1))
 
         #lstm
         lstm = tf.nn.rnn_cell.BasicLSTMCell(32)
@@ -181,9 +181,10 @@ def train(dataset, hyper_dict):
             #mlp_3 = tf.nn.relu(tf.matmul(mlp_2,mlp_3_weights) + mlp_3_biases)
 
             #LSTM
-            lstm_layer, state1 = tf.nn.dynamic_rnn(lstm,tf.transpose(tf.reshape(data,[data.shape[0],data.shape[1], -1]),[1,0,2]),dtype=tf.float32,time_major=True)
+            lstm_layer, state1 = tf.nn.dynamic_rnn(lstm,tf.reshape(data,[data.shape[0],data.shape[1], -1]),dtype=tf.float32,time_major=False)
             print(lstm_layer.shape)
-            lstm_out = tf.nn.relu(lstm_layer[-1])
+            #lstm_out = tf.nn.relu(lstm_layer[:, -1, :])
+            lstm_out = tf.nn.tanh(lstm_layer[:, -1, :])
 
             #CNN
             conv = tf.nn.conv2d(data, conv_weights, [1, 1, 1, 1], padding='VALID')
@@ -337,7 +338,7 @@ def main(_):
 
         # Dump model
         if FLAGS.train_dir is not None:
-            with open(os.path.join('/home/zzym/polyA_HEX/weights',  'cv%d_model.pkl'%i), 'wb') as f:
+            with open(os.path.join('/home/zzym/polyA_HEX/mouse_weights',  'cv%d_model.pkl'%i), 'wb') as f:
                 pickle.dump(save_weights, f, 2)
 
         valid_accuracy_split.append(valid_results[-1])
@@ -357,7 +358,7 @@ def main(_):
         print('*%s* accuracy: %.1f%%' % (motif, motif_test_accuracy[motif]))
 
     if FLAGS.training_result_dir is not None:
-        with open(os.path.join('/home/zzym/polyA_HEX/hyper', 'result.pkl'), 'wb') as f:
+        with open(os.path.join('/home/zzym/polyA_HEX/mouse_hyper', 'result.pkl'), 'wb') as f:
             hyper_dict['valid_accuracy'] = valid_accuracy
             hyper_dict['test_accuracy'] = test_accuracy
             hyper_dict['motif_test_accuracy'] = motif_test_accuracy

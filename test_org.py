@@ -5,15 +5,10 @@ import tensorflow as tf
 from six.moves import cPickle as pickle
 import sys, os
 from decimal import Decimal
-from ms_prep import *
-#from hm_prep import *
+from hm_prep import *
 ############ Model Selection ############
-#POS_PATH = 'data/human/dragon_polyA_data/positive5fold/'
-#NEG_PATH = 'data/human/dragon_polyA_data/negatives5fold/'
-POS_PATH = 'data/mouse/sp_mouse/positive/'
-NEG_PATH = 'data/mouse/sp_mouse/negative/'
-#POS_PATH = 'data/mouse/bl_mouse/positive/'
-#NEG_PATH = 'data/mouse/bl_mouse/negative/'
+POS_PATH = 'data/human/dragon_polyA_data/positive5fold/'
+NEG_PATH = 'data/human/dragon_polyA_data/negatives5fold/'
 #POS_PATH = 'data/human/omni_polyA_data/positive/'
 #NEG_PATH = 'data/human/omni_polyA_data/negative/'
 BATCH_SIZE = 64
@@ -80,7 +75,7 @@ def gen_hyper_dict(hyper_dict=None):
 
         }
     if hyper_dict is not None:
-        hyper_dict = pickle.load(open(os.path.join(FLAGS.training_result_dir, 'result.pkl','rb')))
+        hyper_dict = pickle.load(open(os.path.join('/home/zzym/polyA_HEX/org_hyper', 'result.pkl'),'rb'))
     print(hyper_dict)
     # for k, v in hyper_dict.items():
     #     print("%s: %.2e"%(k, Decimal(v)))
@@ -116,7 +111,7 @@ def test(dataset, hyper_dict, num):
         tf_test_label = tf.constant(np.concatenate([dataset['train_labels'],dataset['valid_labels'],dataset['test_labels']]))
         tf_motif_test_dataset = {}
         tf_motif_test_label = {}
-        for motif in MOUSE_MOTIF_VARIANTS:
+        for motif in HUMAN_MOTIF_VARIANTS:
             tf_motif_test_dataset[motif] = tf.constant(np.concatenate([dataset['motif_dataset'][motif]['train_dataset'],dataset['motif_dataset'][motif]['valid_dataset'],dataset['motif_dataset'][motif]['test_dataset']]))
             tf_motif_test_label[motif] = tf.constant(np.concatenate([dataset['motif_dataset'][motif]['train_labels'],dataset['motif_dataset'][motif]['valid_labels'],dataset['motif_dataset'][motif]['test_labels']]))
 
@@ -134,7 +129,7 @@ def test(dataset, hyper_dict, num):
 
 
 
-        w = pickle.load(open(os.path.join(FLAGS.train_dir,'cv%d_model.pkl'%num,'rb')))
+        w = pickle.load(open(os.path.join('/home/zzym/polyA_HEX/org_weights','cv%d_model.pkl'%num),'rb'))
         print('chekchehf',len(w))
         conv_weights = tf.Variable(tf.cast(w['conv_weights'],dtype=tf.float32))
         conv_biases = tf.Variable(tf.cast(w['conv_biases'],dtype=tf.float32))
@@ -176,17 +171,17 @@ def test(dataset, hyper_dict, num):
 
         test_prediction = tf.nn.softmax(model(tf_test_dataset, drop=False))
         motif_test_prediction = {}
-        for motif in MOUSE_MOTIF_VARIANTS:
+        for motif in HUMAN_MOTIF_VARIANTS:
             motif_test_prediction[motif] = tf.nn.softmax(model(tf_motif_test_dataset[motif], drop=False))
 
     test_results = []
-    motif_test_results = {motif: [] for motif in MOUSE_MOTIF_VARIANTS}
+    motif_test_results = {motif: [] for motif in HUMAN_MOTIF_VARIANTS}
 
     with tf.Session(graph=graph) as session, tf.device('/gpu:0'):
         tf.global_variables_initializer().run()
         test_pred = test_prediction.eval()
         test_results.append(accuracy(test_pred, np.concatenate([dataset['train_labels'],dataset['valid_labels'],dataset['test_labels']])))
-        for motif in MOUSE_MOTIF_VARIANTS:
+        for motif in HUMAN_MOTIF_VARIANTS:
             motif_test_pred = motif_test_prediction[motif].eval()
             motif_test_results[motif].append(accuracy(motif_test_pred, np.concatenate([dataset['motif_dataset'][motif]['train_labels'],dataset['motif_dataset'][motif]['valid_labels'],dataset['motif_dataset'][motif]['test_labels']])))
 
@@ -198,7 +193,7 @@ def main(_):
     hyper_dict = gen_hyper_dict(HYPER_DICT)
     pos_data, pos_labels, neg_data, neg_labels = produce_motif_dataset(NUM_FOLDS, POS_PATH, NEG_PATH)
     test_accuracy_split = []
-    motif_test_accuracy_split = {motif: [] for motif in MOUSE_MOTIF_VARIANTS}
+    motif_test_accuracy_split = {motif: [] for motif in HUMAN_MOTIF_VARIANTS}
 
     for i in range(0,5):
         split =  {
@@ -213,7 +208,7 @@ def main(_):
         dataset['test_dataset'], dataset['test_labels'] = pad_dataset(save['test_dataset'], save['test_labels'])
 
         dataset['motif_dataset'] = {}
-        for motif in MOUSE_MOTIF_VARIANTS:
+        for motif in HUMAN_MOTIF_VARIANTS:
             dataset['motif_dataset'][motif] = {}
             dataset['motif_dataset'][motif]['test_dataset'], dataset['motif_dataset'][motif]['test_labels'] = pad_dataset(save['motif_dataset'][motif]['test_dataset'], save['motif_dataset'][motif]['test_labels'])
             dataset['motif_dataset'][motif]['train_dataset'], dataset['motif_dataset'][motif]['train_labels'] = pad_dataset(save['motif_dataset'][motif]['train_dataset'],save['motif_dataset'][motif]['train_labels'])
@@ -222,20 +217,20 @@ def main(_):
         test_results, motif_test_results= test(dataset, hyper_dict,i)
 
         print("Test accuracy: %.2f%%"%test_results[-1])
-        for motif in MOUSE_MOTIF_VARIANTS:
+        for motif in HUMAN_MOTIF_VARIANTS:
             print('*%s* accuracy: %.1f%%' % (motif, motif_test_results[motif][-1]))
 
         test_accuracy_split.append(test_results[-1])
-        for motif in MOUSE_MOTIF_VARIANTS:
+        for motif in HUMAN_MOTIF_VARIANTS:
             motif_test_accuracy_split[motif].append(motif_test_results[motif][-1])
 
     test_accuracy = np.mean(test_accuracy_split)
     motif_test_accuracy = {}
-    for motif in MOUSE_MOTIF_VARIANTS:
+    for motif in HUMAN_MOTIF_VARIANTS:
         motif_test_accuracy[motif] = np.mean(motif_test_accuracy_split[motif])
     print('\n\n########################\nFinal result:')
     print('Test accuracy: %.1f%%' % (test_accuracy ))
-    for motif in MOUSE_MOTIF_VARIANTS:
+    for motif in HUMAN_MOTIF_VARIANTS:
         print('*%s* accuracy: %.1f%%' % (motif, motif_test_accuracy[motif]))
 
 

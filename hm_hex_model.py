@@ -65,8 +65,8 @@ def gen_hyper_dict(hyper_dict=None):
     if hyper_dict is None:
         hyper_dict = {
 
-            'tf_learning_rate': 0.0015391200154192019,
-            'tf_momentum': 0.985658461191376,
+            'tf_learning_rate': 0.0008,
+            'tf_momentum': 0.98,
             'tf_motif_init_weight': rand_log(1e-2, 10),
             'tf_fc_init_weight': rand_log(1e-2, 10),
             'tf_keep_prob': np.random.choice([.5, .75, 1.0]),
@@ -128,14 +128,14 @@ def train(dataset, hyper_dict):
 
         # Variables.
         conv_weights = tf.Variable(tf.truncated_normal(
-          [PATCH_SIZE, 1, NUM_CHANNELS, DEPTH], stddev = tf_motif_init_weight))
+          [PATCH_SIZE, 1, NUM_CHANNELS, DEPTH], stddev = 1e-1))
         conv_biases = tf.Variable(tf.zeros([DEPTH]))
         layer1_weights = tf.Variable(tf.truncated_normal(
-          [21 * DEPTH, NUM_HIDDEN], stddev = tf_fc_init_weight))
-        layer1_biases = tf.Variable(tf.constant(1.0, shape = [NUM_HIDDEN]))
+          [21 * DEPTH, NUM_HIDDEN], stddev = 1e-1))
+        layer1_biases = tf.Variable(tf.constant(0.0, shape = [NUM_HIDDEN]))
         layer2_weights = tf.Variable(tf.truncated_normal(
-            [NUM_HIDDEN, NUM_LABELS], stddev=tf_fc_init_weight))
-        layer2_biases = tf.Variable(tf.constant(1.0, shape = [NUM_LABELS]))
+            [NUM_HIDDEN, NUM_LABELS], stddev=1e-1))
+        layer2_biases = tf.Variable(tf.constant(0.0, shape = [NUM_LABELS]))
 
         mlp_1_weights = tf.Variable(tf.truncated_normal(
             [896,32],stddev = tf_mlp_init_weight))
@@ -144,14 +144,14 @@ def train(dataset, hyper_dict):
         #mlp_3_weights = tf.Variable(tf.truncated_normal(
         #    [512, 32],stddev = tf_mlp_init_weight))
         concat_weights = tf.Variable(tf.truncated_normal(
-            [32 + NUM_HIDDEN, NUM_LABELS],stddev = tf_concat_init_weight))
-        mlp_1_biases = tf.Variable(tf.constant(1.0, shape=[32]))
+            [32 + NUM_HIDDEN, NUM_LABELS],stddev = 1e-1))
+        mlp_1_biases = tf.Variable(tf.constant(0.0, shape=[32]))
         #mlp_2_biases = tf.Variable(tf.constant(1.0, shape=[512]))
         #mlp_3_biases = tf.Variable(tf.constant(1.0, shape=[32]))
-        concat_biases = tf.Variable(tf.constant(1.0, shape = [2]))
-        lstm_biases = tf.Variable(tf.constant(1.0, shape=[32]))
+        concat_biases = tf.Variable(tf.constant(0.0, shape = [NUM_LABELS]))
+        lstm_biases = tf.Variable(tf.constant(0.0, shape=[32]))
         lstm_weights = tf.Variable(tf.truncated_normal(
-            [896, 32], stddev=tf_mlp_init_weight))
+            [896, 32], stddev=1e-1))
 
         #lstm
         lstm = tf.nn.rnn_cell.BasicLSTMCell(32)
@@ -178,15 +178,15 @@ def train(dataset, hyper_dict):
         # Model.
         def model(data, label,Hex = True, drop=True):
             #MLP
-            #mlp_1 = tf.nn.relu(tf.matmul(tf.reshape(data,[data.shape[0], -1]),mlp_1_weights) + mlp_1_biases)
+            mlp_1 = tf.nn.relu(tf.matmul(tf.reshape(data,[data.shape[0], -1]),mlp_1_weights) + mlp_1_biases)
             #mlp_2 = tf.nn.relu(tf.matmul(mlp_1,mlp_2_weights) + mlp_2_biases)
             #mlp_3 = tf.nn.relu(tf.matmul(mlp_2,mlp_3_weights) + mlp_3_biases)
 
             #LSTM
-            lstm_layer, state1 = tf.nn.dynamic_rnn(lstm,tf.reshape(data,[data.shape[0],data.shape[1], -1]),dtype=tf.float32,time_major=False)
-            print(lstm_layer.shape)
+            #lstm_layer, state1 = tf.nn.dynamic_rnn(lstm,tf.reshape(data,[data.shape[0],data.shape[1], -1]),dtype=tf.float32,time_major=False)
+            #print(lstm_layer.shape)
             #lstm_out = tf.nn.relu(lstm_layer[:, -1, :])
-            lstm_out = tf.math.tanh(lstm_layer[:, -1, :])
+            #lstm_out = tf.nn.tanh(lstm_layer[:, -1, :])
 
             #CNN
             conv = tf.nn.conv2d(data, conv_weights, [1, 1, 1, 1], padding='VALID')
@@ -205,20 +205,22 @@ def train(dataset, hyper_dict):
                 hidden_nodes = tf.nn.relu(tf.matmul(motif_score, layer1_weights) + layer1_biases)
 
             
-            concat_loss = tf.concat([hidden_nodes,lstm_out], 1)
+            concat_loss = tf.concat([hidden_nodes,mlp_1], 1)
 
-            pad = tf.zeros_like(lstm_out, tf.float32)
+            pad = tf.zeros_like(mlp_1, tf.float32)
             concat_pred = tf.concat([hidden_nodes, pad], 1)
 
             pad2 = tf.zeros_like(hidden_nodes, tf.float32)
-            concat_H = tf.concat([pad2, lstm_out], 1)
+            concat_H = tf.concat([pad2, mlp_1], 1)
+
+
             model_loss = tf.matmul(concat_loss, concat_weights) + concat_biases
             model_pred = tf.matmul(concat_pred, concat_weights) + concat_biases
             model_H = tf.matmul(concat_H, concat_weights) + concat_biases
 
             if Hex :
-                model_loss = tf.nn.l2_normalize(model_loss, 0)
-                model_H = tf.nn.l2_normalize(model_H, 0)
+                #model_loss = tf.nn.l2_normalize(model_loss, 0)
+                #model_H = tf.nn.l2_normalize(model_H, 0)
                 model_loss = model_loss -\
                              tf.matmul(tf.matmul(tf.matmul(model_H, tf.matrix_inverse(tf.matmul(model_H,model_H, transpose_a= True))), model_H, transpose_b = True), model_loss)
                 loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels = label, logits = model_loss))
