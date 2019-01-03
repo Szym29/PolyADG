@@ -3,8 +3,8 @@ import tensorflow as tf
 from six.moves import cPickle as pickle
 import sys, os
 from decimal import Decimal
-from ms_prep import *
-from hm_prep import *
+import  ms_prep as ms
+import hm_prep as hm
 ############# Model Selection ############
 #POS_PATH = 'data/mouse/sp_mouse/positive/'
 #NEG_PATH = 'data/mouse/sp_mouse/negative/'
@@ -65,8 +65,8 @@ def gen_hyper_dict(hyper_dict=None):
 
     if hyper_dict is None:
         hyper_dict = {
-            'tf_learning_rate': 0.004793020077587054,
-            'tf_momentum': 0.9829484057595264,
+            'tf_learning_rate': 0.1,
+            'tf_momentum': 0.06,
             'tf_motif_init_weight': rand_log(1e-2, 10),
             'tf_fc_init_weight': rand_log(1e-2, 10),
             'tf_motif_weight_decay': rand_log(1e-5, 1e-3),
@@ -102,14 +102,10 @@ def train(dataset, test_1,test_2,hyper_dict):
         # Load hyper-params
         tf_learning_rate = hyper_dict['tf_learning_rate']
         tf_momentum = hyper_dict['tf_momentum']
-        tf_motif_init_weight = hyper_dict['tf_motif_init_weight']
-        tf_fc_init_weight = hyper_dict['tf_fc_init_weight']
-        tf_motif_weight_decay = hyper_dict['tf_motif_weight_decay']
-        tf_fc_weight_decay = hyper_dict['tf_fc_weight_decay']
         tf_keep_prob = hyper_dict['tf_keep_prob']
         tf_ngroups = hyper_dict['tf_ngroups']
         tf_mlp_init_weight = hyper_dict['tf_mlp_init_weight']
-        tf_concat_init_weight = hyper_dict['tf_concat_init_weight']
+
 
 
         # Input data.
@@ -118,24 +114,21 @@ def train(dataset, test_1,test_2,hyper_dict):
         tf_train_labels = tf.placeholder(tf.float32, shape=(BATCH_SIZE, NUM_LABELS))
 
         tf_test_1_dataset = tf.constant(np.concatenate([test_1['train_dataset'],test_1['valid_dataset'],test_1['test_dataset']]))
-        print(test_1.shape)
         tf_test_1_label = tf.constant(np.concatenate([test_1['train_labels'],test_1['valid_labels'],test_1['test_labels']]))
-        print(test_1)
         tf_motif_test_1_dataset = {}
         tf_motif_test_1_label = {}
-        for motif in HUMAN_MOTIF_VARIANTS:
-            tf_motif_test_1_dataset[motif] = tf.constant(np.concatenate([test_1['motif_dataset'][motif]['train_dataset'],test_1['motif_dataset'][motif]['valid_dataset'],test_1['motif_dataset'][motif]['test_dataset']]))
-            tf_motif_test_1_label[motif] = tf.constant(np.concatenate([test_1['motif_dataset'][motif]['train_labels'],test_1['motif_dataset'][motif]['valid_labels'],test_1['motif_dataset'][motif]['test_labels']]))
+        for motif in hm.HUMAN_MOTIF_VARIANTS:
+            tf_motif_test_1_dataset[motif] = tf.constant(test_1['motif_dataset'][motif]['test_dataset'])
+            tf_motif_test_1_label[motif] = tf.constant(test_1['motif_dataset'][motif]['test_labels'])
 
         tf_test_2_dataset = tf.constant(np.concatenate([test_2['train_dataset'],test_2['valid_dataset'],test_2['test_dataset']]))
         print(tf_test_2_dataset.shape)
         tf_test_2_label = tf.constant(np.concatenate([test_2['train_labels'],test_2['valid_labels'],test_2['test_labels']]))
-        print(test_2)
         tf_motif_test_2_dataset = {}
         tf_motif_test_2_label = {}
-        for motif in HUMAN_MOTIF_VARIANTS:
-            tf_motif_test_2_dataset[motif] = tf.constant(np.concatenate([test_2['motif_dataset'][motif]['train_dataset'],test_2['motif_dataset'][motif]['valid_dataset'],test_2['motif_dataset'][motif]['test_dataset']]))
-            tf_motif_test_2_label[motif] = tf.constant(np.concatenate([test_2['motif_dataset'][motif]['train_labels'],test_2['motif_dataset'][motif]['valid_labels'],test_2['motif_dataset'][motif]['test_labels']]))
+        for motif in hm.HUMAN_MOTIF_VARIANTS:
+            tf_motif_test_2_dataset[motif] = tf.constant(test_2['motif_dataset'][motif]['test_dataset'])
+            tf_motif_test_2_label[motif] = tf.constant(test_2['motif_dataset'][motif]['test_labels'])
 
 
         tf_valid_dataset = tf.constant(dataset['valid_dataset'])
@@ -166,14 +159,14 @@ def train(dataset, test_1,test_2,hyper_dict):
         #mlp_3_weights = tf.Variable(tf.truncated_normal(
         #    [512, 32],stddev = tf_mlp_init_weight))
         concat_weights = tf.Variable(tf.truncated_normal(
-            [32 + NUM_HIDDEN, NUM_LABELS],stddev = tf_concat_init_weight))
+            [32 + NUM_HIDDEN, NUM_LABELS],stddev = 1e-1))
         mlp_1_biases = tf.Variable(tf.constant(1.0, shape=[32]))
         #mlp_2_biases = tf.Variable(tf.constant(1.0, shape=[512]))
         #mlp_3_biases = tf.Variable(tf.constant(1.0, shape=[32]))
         concat_biases = tf.Variable(tf.constant(1.0, shape = [2]))
         lstm_biases = tf.Variable(tf.constant(1.0, shape=[32]))
         lstm_weights = tf.Variable(tf.truncated_normal(
-            [896, 32], stddev=tf_mlp_init_weight))
+            [896, 32], stddev=1e-1))
 
         #lstm
         lstm = tf.nn.rnn_cell.BasicLSTMCell(32)
@@ -202,14 +195,14 @@ def train(dataset, test_1,test_2,hyper_dict):
         # Model.
         def model(data, label, Hex = True, drop=True):
             #MLP
-            #mlp_1 = tf.nn.relu(tf.matmul(tf.reshape(data,[data.shape[0], -1]),mlp_1_weights) + mlp_1_biases)
+            mlp_1 = tf.nn.relu(tf.matmul(tf.reshape(data,[data.shape[0], -1]),mlp_1_weights) + mlp_1_biases)
             #mlp_2 = tf.nn.relu(tf.matmul(mlp_1,mlp_2_weights) + mlp_2_biases)
             #mlp_3 = tf.nn.relu(tf.matmul(mlp_2,mlp_3_weights) + mlp_3_biases)
 
             #LSTM
-            lstm_layer, state1 = tf.nn.dynamic_rnn(lstm,tf.transpose(tf.reshape(data,[data.shape[0],data.shape[1], -1]),[1,0,2]),dtype=tf.float32,time_major=True)
-            print(lstm_layer.shape)
-            lstm_out = tf.nn.relu(lstm_layer[-1])
+            #lstm_layer, state1 = tf.nn.dynamic_rnn(lstm,tf.transpose(tf.reshape(data,[data.shape[0],data.shape[1], -1]),[1,0,2]),dtype=tf.float32,time_major=True)
+            #print(lstm_layer.shape)
+            #lstm_out = tf.nn.relu(lstm_layer[-1])
 
             #CNN
             conv = tf.nn.conv2d(data, conv_weights, [1, 1, 1, 1], padding='VALID')
@@ -227,14 +220,14 @@ def train(dataset, test_1,test_2,hyper_dict):
                 hidden_nodes = tf.nn.relu(tf.matmul(motif_score, layer1_weights) + layer1_biases)
 
 
-            concat_loss = tf.concat([hidden_nodes, lstm_out], 1)
+            concat_loss = tf.concat([hidden_nodes, mlp_1], 1)
 
-            pad = tf.zeros_like(lstm_out, tf.float32)
+            pad = tf.zeros_like(mlp_1, tf.float32)
 
             concat_pred = tf.concat([hidden_nodes, pad], 1)
 
             pad2 = tf.zeros_like(hidden_nodes, tf.float32)
-            concat_H = tf.concat([pad2, lstm_out], 1)
+            concat_H = tf.concat([pad2, mlp_1], 1)
             model_loss = tf.matmul(concat_loss, concat_weights) + concat_biases
             model_pred = tf.matmul(concat_pred, concat_weights) + concat_biases
             model_H = tf.matmul(concat_H, concat_weights) + concat_biases
@@ -267,15 +260,15 @@ def train(dataset, test_1,test_2,hyper_dict):
         _, test1 = model(tf_test_1_dataset, tf_test_1_label, drop=False)
         test1_prediction = tf.nn.softmax(test1)
         motif_test_1_prediction = {}
-        for motif in HUMAN_MOTIF_VARIANTS:
+        for motif in hm.HUMAN_MOTIF_VARIANTS:
             _, motif_test_1 = model(tf_motif_test_1_dataset[motif],tf_motif_test_1_label[motif], drop=False)
             motif_test_1_prediction[motif] = tf.nn.softmax(motif_test_1)
-        
+
 
         _, test2 = model(tf_test_2_dataset, tf_test_2_label, drop=False)
         test2_prediction = tf.nn.softmax(test2)
         motif_test_2_prediction = {}
-        for motif in HUMAN_MOTIF_VARIANTS:
+        for motif in hm.HUMAN_MOTIF_VARIANTS:
             _, motif_test_2 = model(tf_motif_test_2_dataset[motif],tf_motif_test_2_label[motif], drop=False)
             motif_test_2_prediction[motif] = tf.nn.softmax(motif_test_2)
 
@@ -283,8 +276,11 @@ def train(dataset, test_1,test_2,hyper_dict):
     # Kick off training
     valid_results = []
     test_results = []
-    motif_test_results = {motif: [] for motif in MOUSE_MOTIF_VARIANTS}
+    motif_test_1_results = {motif: [] for motif in hm.HUMAN_MOTIF_VARIANTS}
+    motif_test_2_results = {motif: [] for motif in hm.HUMAN_MOTIF_VARIANTS}
     save_weights = []
+    test_1_results = []
+    test_2_results = []
     with tf.Session(graph=graph) as session,tf.device('/gpu:0'):
         tf.global_variables_initializer().run()
         train_dataset = dataset['train_dataset']
@@ -310,17 +306,17 @@ def train(dataset, test_1,test_2,hyper_dict):
 
 
             test_1_pred = test1_prediction.eval()
-            test_1_results.append(accuracy(test_1_pred, test_1['test_labels']))
-            for motif in MOUSE_MOTIF_VARIANTS:
+            test_1_results.append(accuracy(test_1_pred,  np.concatenate([test_1['train_labels'], test_1['valid_labels'], test_1['test_labels']])))
+            for motif in hm.HUMAN_MOTIF_VARIANTS:
                 motif_test_1_pred = motif_test_1_prediction[motif].eval()
                 motif_test_1_results[motif].append(accuracy(motif_test_1_pred, test_1['motif_dataset'][motif]['test_labels']))
-            
+
             test_2_pred = test2_prediction.eval()
-            test_2_results.append(accuracy(test_2_pred, test_2['test_labels']))
-            for motif in MOUSE_MOTIF_VARIANTS:
+            test_2_results.append(accuracy(test_2_pred, np.concatenate([test_2['train_labels'], test_2['valid_labels'], test_2['test_labels']])))
+            for motif in hm.HUMAN_MOTIF_VARIANTS:
                 motif_test_2_pred = motif_test_2_prediction[motif].eval()
                 motif_test_2_results[motif].append(accuracy(motif_test_2_pred, test_2['motif_dataset'][motif]['test_labels']))
-            
+
 
             print('Valid accuracy at epoch %d: %.1f%%' % (epoch, valid_results[-1]))
 
@@ -328,9 +324,9 @@ def train(dataset, test_1,test_2,hyper_dict):
             if epoch > 10 and valid_results[-11] >= max(valid_results[-10:]):
                 valid_results = valid_results[:-10]
                 test_1_results = test_1_results[:-10]
-                motif_test_1_results = {motif: motif_test_1_results[motif][:-10] for motif in MOUSE_MOTIF_VARIANTS}
+                motif_test_1_results = {motif: motif_test_1_results[motif][:-10] for motif in hm.HUMAN_MOTIF_VARIANTS}
                 test_2_results = test_2_results[:-10]
-                motif_test_2_results = {motif: motif_test_2_results[motif][:-10] for motif in MOUSE_MOTIF_VARIANTS}
+                motif_test_2_results = {motif: motif_test_2_results[motif][:-10] for motif in hm.HUMAN_MOTIF_VARIANTS}
                 return valid_results, test_1_results, motif_test_1_results, test_2_results, motif_test_2_results, save_weights[0]
 
             # Model saving
@@ -351,31 +347,29 @@ def main(_):
     # block_print()
 
     hyper_dict = gen_hyper_dict(HYPER_DICT)
-    pos_data, pos_labels, neg_data, neg_labels = ms_prep.produce_motif_dataset(NUM_FOLDS, POS_PATH, NEG_PATH)
-    hm_1_pos_data, hm_1_pos_labels, hm_1_neg_data, hm_1_neg_labels = hm_prep.produce_motif_dataset(NUM_FOLDS, HM1_POS_PATH,HM1_NEG_PATH)
-    hm_2_pos_data, hm_2_pos_labels, hm_2_neg_data, hm_2_neg_labels = hm_prep.produce_motif_dataset(NUM_FOLDS, HM2_POS_PATH,HM2_NEG_PATH)
-    
-    test_1_acc_split = {motif: [] for motif in MOUSE_MOTIF_VARIANTS}
-    test_2_acc_split = {motif: [] for motif in MOUSE_MOTIF_VARIANTS}
+    pos_data, pos_labels, neg_data, neg_labels = ms.produce_motif_dataset(NUM_FOLDS, POS_PATH, NEG_PATH)
+    hm_1_pos_data, hm_1_pos_labels, hm_1_neg_data, hm_1_neg_labels = hm.produce_motif_dataset(NUM_FOLDS, HM1_POS_PATH,HM1_NEG_PATH)
+    hm_2_pos_data, hm_2_pos_labels, hm_2_neg_data, hm_2_neg_labels = hm.produce_motif_dataset(NUM_FOLDS, HM2_POS_PATH,HM2_NEG_PATH)
+
 
     # Cross validate
     valid_accuracy_split = []
     test_1_accuracy_split = []
     test_2_accuracy_split = []
-    motif_test_1_accuracy_split = {motif: [] for motif in HUMAN_MOTIF_VARIANTS}
-    motif_test_2_accuracy_split = {motif: [] for motif in HUMAN_MOTIF_VARIANTS}
+    motif_test_1_accuracy_split = {motif: [] for motif in hm.HUMAN_MOTIF_VARIANTS}
+    motif_test_2_accuracy_split = {motif: [] for motif in hm.HUMAN_MOTIF_VARIANTS}
 
     for i in range(NUM_FOLDS):
         split =  {
-            'train': [(i + j) % NUM_FOLDS for j in range(NUM_FOLDS-2)], 
-            'valid': [(i + NUM_FOLDS-2) % NUM_FOLDS], 
+            'train': [(i + j) % NUM_FOLDS for j in range(NUM_FOLDS-2)],
+            'valid': [(i + NUM_FOLDS-2) % NUM_FOLDS],
             'test': [(i + NUM_FOLDS-1) % NUM_FOLDS]
             }
-        save = motif_data_split(pos_data, pos_labels, neg_data, neg_labels, NUM_FOLDS, split)
+        save = ms.motif_data_split(pos_data, pos_labels, neg_data, neg_labels, NUM_FOLDS, split)
 
-        save_2 = hm_prep.motif_data_split(hm_2_pos_data, hm_2_pos_labels, hm_2_neg_data, hm_2_neg_labels, NUM_FOLDS, split)
-        save_1 = hm_prep.motif_data_split(hm_1_pos_data, hm_1_pos_labels, hm_1_neg_data, hm_1_neg_labels, NUM_FOLDS, split)
-        
+        save_2 = hm.motif_data_split(hm_2_pos_data, hm_2_pos_labels, hm_2_neg_data, hm_2_neg_labels, NUM_FOLDS, split)
+        save_1 = hm.motif_data_split(hm_1_pos_data, hm_1_pos_labels, hm_1_neg_data, hm_1_neg_labels, NUM_FOLDS, split)
+
 
         test_1 = {}
         test_1['train_dataset'], test_1['train_labels'] = pad_dataset(save_1['train_dataset'], save_1['train_labels'])
@@ -383,7 +377,7 @@ def main(_):
         test_1['test_dataset'], test_1['test_labels'] = pad_dataset(save_1['test_dataset'], save_1['test_labels'])
 
         test_1['motif_dataset'] = {}
-        for motif in HUMAN_MOTIF_VARIANTS:
+        for motif in hm.HUMAN_MOTIF_VARIANTS:
             test_1['motif_dataset'][motif] = {}
             test_1['motif_dataset'][motif]['test_dataset'], test_1['motif_dataset'][motif]['test_labels'] = pad_dataset(save_1['motif_dataset'][motif]['test_dataset'], save_1['motif_dataset'][motif]['test_labels'])
 
@@ -392,9 +386,9 @@ def main(_):
         test_2['train_dataset'], test_2['train_labels'] = pad_dataset(save_2['train_dataset'], save_2['train_labels'])
         test_2['valid_dataset'], test_2['valid_labels'] = pad_dataset(save_2['valid_dataset'], save_2['valid_labels'])
         test_2['test_dataset'], test_2['test_labels'] = pad_dataset(save_2['test_dataset'], save_2['test_labels'])
-        
+
         test_2['motif_dataset'] = {}
-        for motif in HUMAN_MOTIF_VARIANTS:
+        for motif in hm.HUMAN_MOTIF_VARIANTS:
             test_2['motif_dataset'][motif] = {}
             test_2['motif_dataset'][motif]['test_dataset'], test_2['motif_dataset'][motif]['test_labels'] = pad_dataset(save_2['motif_dataset'][motif]['test_dataset'], save_2['motif_dataset'][motif]['test_labels'])
 
@@ -406,20 +400,20 @@ def main(_):
         dataset['valid_dataset'], dataset['valid_labels'] = pad_dataset(save['valid_dataset'], save['valid_labels'])
         dataset['test_dataset'], dataset['test_labels'] = pad_dataset(save['test_dataset'], save['test_labels'])
         dataset['motif_dataset'] = {}
-        for motif in MOUSE_MOTIF_VARIANTS:
+        for motif in ms.MOUSE_MOTIF_VARIANTS:
             dataset['motif_dataset'][motif] = {}
             dataset['motif_dataset'][motif]['test_dataset'], dataset['motif_dataset'][motif]['test_labels'] = pad_dataset(save['motif_dataset'][motif]['test_dataset'], save['motif_dataset'][motif]['test_labels'])
 
-        train_resuts, valid_results, test_1_results, motif_test_1_results, test_2_results, motif_test_2_results, save_weights = train(dataset, test_1, test_2, hyper_dict)
+        valid_results, test_1_results, motif_test_1_results, test_2_results, motif_test_2_results, save_weights = train(dataset, test_1, test_2, hyper_dict)
         print("\nbest valid epoch: %d"%(len(valid_results)-1))
         print("Test_1 accuracy: %.2f%%"%test_1_results[-1])
         print("Test_2 accuracy: %.2f%%"%test_2_results[-1])
         print("Validation accuracy: %.2f%%"%valid_results[-1])
         print("HUMAN_dragon..............")
-        for motif in HUMAN_MOTIF_VARIANTS:
+        for motif in hm.HUMAN_MOTIF_VARIANTS:
             print('*%s* accuracy: %.1f%%' % (motif, motif_test_1_results[motif][-1]))
         print("HUMAN_omni..............")
-        for motif in HUMAN_MOTIF_VARIANTS:
+        for motif in hm.HUMAN_MOTIF_VARIANTS:
             print('*%s* accuracy: %.1f%%' % (motif, motif_test_2_results[motif][-1]))
 
         # Dump model
@@ -430,7 +424,7 @@ def main(_):
         valid_accuracy_split.append(valid_results[-1])
         test_1_accuracy_split.append(test_1_results[-1])
         test_2_accuracy_split.append(test_2_results[-1])
-        for motif in HUMAN_MOTIF_VARIANTS:
+        for motif in hm.HUMAN_MOTIF_VARIANTS:
             motif_test_1_accuracy_split[motif].append(motif_test_1_results[motif][-1])
             motif_test_2_accuracy_split[motif].append(motif_test_2_results[motif][-1])
 
@@ -439,7 +433,7 @@ def main(_):
     test_2_accuracy = np.mean(test_2_accuracy_split)
     motif_test_1_accuracy = {}
     motif_test_2_accuracy = {}
-    for motif in HUMAN_MOTIF_VARIANTS:
+    for motif in hm.HUMAN_MOTIF_VARIANTS:
         motif_test_1_accuracy[motif] = np.mean(motif_test_1_accuracy_split[motif])
         motif_test_2_accuracy[motif] = np.mean(motif_test_2_accuracy_split[motif])
     print('\n\n########################\nFinal result:')
@@ -447,12 +441,12 @@ def main(_):
     print('Test_1 accuracy: %.1f%%' % (test_1_accuracy ))
     print('Test_2 accuracy: %.1f%%' % (test_2_accuracy ))
     print("HUMAN_dragon..............")
-    for motif in HUMAN_MOTIF_VARIANTS:
+    for motif in hm.HUMAN_MOTIF_VARIANTS:
         print('*%s* accuracy: %.1f%%' % (motif, motif_test_1_accuracy[motif]))
 
     print("HUMAN_omni..............")
-    for motif in HUMAN_MOTIF_VARIANTS:
-        print('*%s* accuracy: %.1f%%' % (motif, motif_test_2_accuracy[motif]))    
+    for motif in hm.HUMAN_MOTIF_VARIANTS:
+        print('*%s* accuracy: %.1f%%' % (motif, motif_test_2_accuracy[motif]))
 
     if FLAGS.training_result_dir is not None:
         with open(os.path.join('/home/zzym/polyA_HEX/hyper', 'result.pkl'), 'wb') as f:
