@@ -379,7 +379,9 @@ def train(dataset, test_1,test_2,hyper_dict):
         # Early stopping based on validation results
             if epoch > 10 and valid_results[-11] > max(valid_results[-10:]):
                 train_resuts = train_resuts[:-10]
+                motif_train_results = {motif: motif_train_results[motif][:-10] for motif in hm.HUMAN_MOTIF_VARIANTS}
                 valid_results = valid_results[:-10]
+                motif_valid_results = {motif: motif_valid_results[motif][:-10] for motif in hm.HUMAN_MOTIF_VARIANTS}
                 test_1_results = test_1_results[:-10]
                 motif_test_1_results = {motif: motif_test_1_results[motif][:-10] for motif in ms.MOUSE_MOTIF_VARIANTS}
                 test_2_results = test_2_results[:-10]
