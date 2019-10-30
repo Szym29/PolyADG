@@ -23,7 +23,7 @@ python PolyADG.py
 
 (TBC.......)
 
-##Datasets :
+## Datasets :
 
 - Omni Human Poly(A) signal dataset and BL mouse Poly(A) signal datasets come from [DeeReCT-PolyA](https://github.com/likesum/DeeReCT-PolyA). 
 - We established a Rat Poly(A) signal dataset which contains 11 Poly(A) signal motifs. This dataset consists of roughly 37,000 DNA sequences and the number of true Poly(A) signal sequences is the same as pseudo-ones.
@@ -32,6 +32,6 @@ Details of every steps to show how we establish the Rat Poly(A) signal dataset c
 
 ----
 
-##Contact:
+## Contact:
 
 [Yumin Zheng](zhengyumin529@gmail.com)
