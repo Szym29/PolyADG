@@ -34,4 +34,4 @@ Details of every steps to show how we establish the Rat Poly(A) signal dataset c
 
 ## Contact:
 
-[Yumin Zheng](zhengyumin529@gmail.com)
+[Yumin Zheng](mailto:zhengyumin529@gmail.com)
