@@ -2,7 +2,7 @@
 
 Example implementation of the paper:
 
-- Zheng, Y., Wang, H., Zhang, Y., Xing, E. P. and Xu M. "Poly(A)-DG: a neural-network-based domain generalization method for cross-species Ploy(A) Signal identification" (In preparation)
+- Zheng, Y., Wang, H., Zhang, Y., Gao, X., Xing, E. P. and Xu M. "Poly(A)-DG: a neural-network-based domain generalization method for cross-species Ploy(A) Signal identification" (In preparation)
 
 
 
@@ -21,7 +21,7 @@ Run `PolyADG.py` directly.
 python PolyADG.py
 ```
 
-(TBC.......)
+(TBD.......)
 
 ## Datasets :
 
