@@ -2,7 +2,7 @@
 
 Example implementation of the paper:
 
-- Zheng, Y., Wang, H., Zhang, Y., Gao, X., Xing, E. P. and Xu M. "Poly(A)-DG: a neural-network-based domain generalization method for cross-species Ploy(A) Signal identification" (In preparation)
+- Zheng Y, Wang H, Zhang Y, Gao X, Xing EP, Xu M (2020) Poly(A)-DG: A deep-learningbased domain generalization method to identify cross-species Poly(A) signal without prior knowledge from target species. PLoS Comput Biol 16(11): e1008297. https://doi.org/10.1371/journal.pcbi.1008297
 
 
 
