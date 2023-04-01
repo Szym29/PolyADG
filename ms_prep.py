@@ -14,19 +14,21 @@ def get_data(data_root, label):
     for data_file in os.listdir(data_root):
         data_1.clear()
         data_path = os.path.join(data_root, data_file)
+
         with open(data_path, 'r') as f:
             alphabet = np.array(['A', 'G', 'T', 'C'])
             for line in f:
+                
                 line = list(line.strip('\n'))
                 seq = np.array(line, dtype = '|U1').reshape(-1, 1)
+
                 seq_data = (seq == alphabet).astype(np.float32)
 
                 data_1.append(seq_data)
-
-
-                data_1 = data_1[:len(data_1)//10*9]
-                for i in data_1:
-                    data.append(i)
+                
+            data_1 = data_1[:len(data_1)//10*9]
+            for i in data_1:
+                data.append(i)
     data = np.stack(data).reshape([-1, 206, 1, 4])
     if label:
         labels = np.zeros(data.shape[0])
