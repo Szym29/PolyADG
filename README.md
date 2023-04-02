@@ -9,8 +9,8 @@ Example implementation of the paper:
 ## Environments:
 
 ```
-Python 3
-Tensorflow 1.14
+Python 3.8-3.11
+Tensorflow V2
 ```
 
 ## Run
@@ -21,7 +21,6 @@ Run `PolyADG.py` directly.
 python PolyADG.py
 ```
 
-(TBD.......)
 
 ## Datasets :
 
