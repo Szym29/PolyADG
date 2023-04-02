@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import sys, os
 from decimal import Decimal
 import hm_prep as hm
@@ -126,7 +126,7 @@ def train(source_1, source_2, target,hyper_dict):
         tf_train_dataset = tf.placeholder(
             tf.float32, shape=(BATCH_SIZE, SEQ_LEN, 1, NUM_CHANNELS))
         tr_shuffle =  tf.placeholder(
-            tf.float32, shape=(BATCH_SIZE,  NUM_CHANNELS))
+            tf.float32, shape=(BATCH_SIZE,  SEQ_LEN*NUM_CHANNELS))
         tf_train_labels = tf.placeholder(tf.float32, shape=(BATCH_SIZE, NUM_LABELS))
 
         source_2_dataset = tf.constant(source_2['test_dataset'])
@@ -169,7 +169,7 @@ def train(source_1, source_2, target,hyper_dict):
         layer2_biases = tf.Variable(tf.constant(0.0, shape=[NUM_LABELS]))
 
         mlp_1_weights = tf.Variable(tf.truncated_normal(
-            [4,128],stddev = tf_mlp_init_weight))
+            [ SEQ_LEN * NUM_CHANNELS, 128],stddev = tf_mlp_init_weight))
         mlp_out_weights = tf.Variable(tf.truncated_normal(
             [16,3],stddev = tf_mlp_init_weight))
         mlp_2_weights = tf.Variable(tf.truncated_normal(
@@ -247,6 +247,8 @@ def train(source_1, source_2, target,hyper_dict):
             return loss, model_pred
 
     # Training computation.
+        print('???')
+        print(tr_shuffle.shape)
         loss, _ = model(tf_train_dataset, tr_shuffle, tf_train_labels, drop=True)
     # Optimizer.
         global_step = tf.Variable(0, trainable=False)  # count the number of steps taken.
@@ -256,7 +258,7 @@ def train(source_1, source_2, target,hyper_dict):
 
     # Predictions for the training, validation, and test data.
         motif_train_prediction = {}
-
+        print(tf_train_valid_shuffle.shape)
         train_loss, train_valid = model(tf_train_valid_dataset,tf_train_valid_shuffle, tf_train_valid_label, drop=True)
         train_prediction = tf.nn.softmax(train_valid)
 
@@ -294,7 +296,7 @@ def train(source_1, source_2, target,hyper_dict):
             permutation = np.random.permutation(train_labels.shape[0])
             shuffled_dataset = train_dataset[permutation, :, :]
             shuffled_labels = train_labels[permutation, :]
-            shuffled_domains = domain[permutation, :]
+            # shuffled_domains = domain[permutation, :]
             for step in range(shuffled_labels.shape[0] // BATCH_SIZE):
                 offset = step * BATCH_SIZE
                 batch_data = shuffled_dataset[offset:(offset + BATCH_SIZE), :, :, :]
@@ -308,7 +310,7 @@ def train(source_1, source_2, target,hyper_dict):
 
             valid_pred = valid_prediction.eval()
             print('validation loss', valid_loss.eval())
-            valid_losses.append(valid_loss.eval())
+            # valid_losses.append(valid_loss.eval())
             valid_results.append(accuracy(valid_pred,  np.concatenate([source_1['valid_labels'], source_2['valid_labels']])))
             source_1_pred = source_1_prediction.eval()
             source_1_results.append(accuracy(source_1_pred,source_1['test_labels']))
@@ -317,7 +319,7 @@ def train(source_1, source_2, target,hyper_dict):
             source_2_results.append(accuracy(source_2_pred, source_2['test_labels']))
 
             target_pred = target_prediction.eval()
-            target_results.append(accuracy(test_2_pred, np.concatenate([target['train_labels'], target['valid_labels'], target['test_labels']])))
+            target_results.append(accuracy(target_pred, np.concatenate([target['train_labels'], target['valid_labels'], target['test_labels']])))
 
 
             print('Training accuracy at epoch %d: %.1f%%' % (epoch, train_resuts[-1]))
@@ -384,7 +386,7 @@ def main(_):
 
 
             train_resuts, valid_results, source_1_results, source_2_results, target_results = train(source_1, source_2, target,hyper_dict)
-            print(valid_loss)
+            
             print("\nbest valid epoch: %d" % (len(train_resuts) - 1))
             print("Training accuracy: %.2f%%" % train_resuts[-1])
             print("Validation accuracy: %.2f%%" % valid_results[-1])
