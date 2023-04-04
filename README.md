@@ -24,6 +24,7 @@ python script.py
 Running the `script.py` can also generate the plots of cross-species invariant signals captured by conovlution filters in Poly(A)-DG model. You can also simply run `analyze.py` script to fetech the information.
 
 ![cross-species invariant signals](signal_captured_by_CNN_filters.png)
+This plot shows species invariant signals the model captured in the target species after learning from two source species. e.g. panel (A) shows that the motif patterns captured by CNN kernel of Poly(A)-DG when it generalizes to bovine and Human after training from mouse and rat data. 
 
 ## Datasets :
 
