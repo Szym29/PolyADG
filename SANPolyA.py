@@ -11,7 +11,7 @@ from keras import backend as K
 from keras.engine import Layer, InputSpec
 from keras.metrics import binary_accuracy
 from keras.initializers import Ones, Zeros
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from keras.layers import Embedding
 from keras.utils.generic_utils import get_custom_objects
 # from keras.models import Sequential, Model
