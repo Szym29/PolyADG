@@ -15,21 +15,31 @@ Tensorflow V2
 
 ## Run
 
-Run `PolyADG.py` directly.
+Run `script.py` to run Poly(A)-DG, DeepPolyA, and SANPolyA to perform domain generalization task. 
 
 ```
-python PolyADG.py
+python script.py
 ```
 
+Running the `script.py` can also generate the plots of cross-species invariant signals captured by conovlution filters in Poly(A)-DG model. You can also simply run `analyze.py` script to fetech the information.
+
+![cross-species invariant signals](signal_captured_by_CNN_filters.png)
 
 ## Datasets :
 
 - Omni Human Poly(A) signal dataset and BL mouse Poly(A) signal datasets come from [DeeReCT-PolyA](https://github.com/likesum/DeeReCT-PolyA). 
-- We established a Rat Poly(A) signal dataset which contains 11 Poly(A) signal motifs. This dataset consists of roughly 37,000 DNA sequences and the number of true Poly(A) signal sequences is the same as pseudo-ones.
+- Bovine dataset comes from [DeepGSR](https://academic.oup.com/bioinformatics/article/35/7/1125/5089227). 
+- We established a Rat Poly(A) signal dataset which contains 11 Poly(A) signal motifs and the positive signals are built based on the [PolyA DB v3.2 dataset](https://genome.cshlp.org/content/28/10/1427) and we estalished the pesudo PolyA signal following the steps in the [supplementary](https://ndownloader.figstatic.com/files/25407799) in our paper. This dataset consists of roughly 37,000 DNA sequences and the number of true Poly(A) signal sequences is the same as pseudo-ones. 
 
 Details of every steps to show how we establish the Rat Poly(A) signal dataset can be found in the supplementary of Our paper.
 
 ----
+
+## Reference
+
+[DeepPolyA](https://github.com/stella-gao/DeepPolyA)
+
+[SANPolyA](https://github.com/yuht4/SANPolyA)
 
 ## Contact:
 
