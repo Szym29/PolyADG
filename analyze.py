@@ -59,7 +59,7 @@ def visulize_filters(data, filters,tag):
     list_filters = list(filters)
     mer = np.argmax(filters, axis=1)
     
-    print(mer.shape)
+
     #print(mer)
     fre = []
     for i in range(len(data)):
@@ -68,17 +68,18 @@ def visulize_filters(data, filters,tag):
             temp.append(data[i][mer[i][j]:mer[i][j]+10])
         temp = np.array(temp)
         fre.append(temp)
-    print(np.array(fre).shape)
+
     fre = transfer_back(fre)
     position_value = np.mean(filters,axis=2)
     position_value=np.mean(position_value,axis=0)
-    print(position_value)
-    #with open('./visulization/%s+%s+position_value.txt'%(DOMAIN1,DOMAIN2),'a+') as f:
+
+    #with open('./visualization/%s+%s+position_value.txt'%(DOMAIN1,DOMAIN2),'a+') as f:
     #    for each in position_value:
     #        f.write(str(each)+'\n')
     for each in fre:
         for i in range(0,16):
-            with open('./visulization/%s+%s+filters%d-%s.txt'%(DOMAIN1,DOMAIN2,i+1,tag),'a+') as f:
+    
+            with open('./visualization/%s+%s/filters%d-%s.txt'%(DOMAIN1,DOMAIN2,i+1,tag),'a+') as f:
                 #f.write('source are %s+%s, target is %s \n'% (D1_POS_PATH,D2_POS_PATH,D3_POS_PATH))
                 f.write(str(each[i])+'\n')
 def position_value(filters,labels):
@@ -101,7 +102,7 @@ def position_value(filters,labels):
     position_value={}
     position_value['pos']=pos_value
     position_value['neg']=neg_value
-    print(pos_value.shape)
+
     return position_value
     #position_value = np.mean(filters,axis=2)
     #position_value=np.mean(position_value,axis=0)
@@ -414,13 +415,31 @@ def train(dataset, d2,d3,hyper_dict):
                 valid_label = np.concatenate([dataset['valid_labels'],d2['valid_labels'], dataset['test_labels'],d2['test_labels']])
                 visulize_filters(valid_data,filters,tag='all')
                 position_values =position_value(filters,valid_label) 
+                # 
                 return train_resuts, valid_results, d2_results, d3_results, valid_losses,d1_results, position_values
 
-    position_values=0
+            else:
+
+                #filters = filters
+                d1_filter = d1_filters.eval()
+                d2_filter = d2_filters.eval()
+                d3_filter = d3_filters.eval()
+                visulize_filters(dataset['test_dataset'],d1_filter,DOMAIN1)
+                visulize_filters(d2['test_dataset'],d2_filter,DOMAIN2)
+                visulize_filters(np.concatenate([d3['train_dataset'],d3['valid_dataset'],d3['test_dataset']]),d3_filter,DOMAIN3)
+                filters = filters.eval()
+                valid_data = np.concatenate([dataset['valid_dataset'],d2['valid_dataset'], dataset['test_dataset'],d2['test_dataset']])
+                valid_label = np.concatenate([dataset['valid_labels'],d2['valid_labels'], dataset['test_labels'],d2['test_labels']])
+                visulize_filters(valid_data,filters,tag='all')
+                position_values =position_value(filters,valid_label) 
     return train_resuts, valid_results, d2_results, d3_results,valid_losses,d1_results, position_values
 
 
 def main():
+    try:
+        os.system('mkdir ./visualization/%s+%s/'%(DOMAIN1,DOMAIN2))
+    except:
+        pass
     for rounds in range(0,10):
         print('rounds:%d'%rounds)
         hyper_dict = gen_hyper_dict(HYPER_DICT)
@@ -444,9 +463,7 @@ def main():
             'test': [(i + NUM_FOLDS-1) % NUM_FOLDS]
             }
 
-            print(split['train'])
-            print(split['valid'])
-            print(split['test'])
+
             split1= {
             'train': [(i + j) % NUM_FOLDS for j in range(NUM_FOLDS-2)], 
             'valid': [(i + NUM_FOLDS-2) % NUM_FOLDS], 
@@ -483,8 +500,7 @@ def main():
             position_pos_value_split=[]
             position_neg_value_split=[]
             train_resuts, valid_results, d2_results, d3_results, valid_loss,d1_results,position_values = train(d1, d2, d3,hyper_dict)
-            
-            print(valid_loss)
+
             position_pos_value_split.append(position_values['pos'])
             position_neg_value_split.append(position_values['neg'])
             train_accuracy_split.append(train_resuts[-1])
@@ -499,14 +515,15 @@ def main():
         d2_accuracy = np.mean(d2_accuracy_split)
         d3_accuracy = np.mean(d3_accuracy_split)
         d1_accuracy = np.mean(d1_accuracy_split)
-        print(np.array(position_pos_value_split).shape)
+
         position_pos_values = np.mean(np.array(position_pos_value_split),axis=0)
         position_neg_values = np.mean(np.array(position_neg_value_split),axis=0)
-        print(position_neg_values.shape)
-        with open('./visulization/%s+%s+position_pos_value.txt'%(DOMAIN1,DOMAIN2),'a+') as f:
+ 
+
+        with open('./visualization/%s+%s/position_pos_value.txt'%(DOMAIN1,DOMAIN2),'a+') as f:
             for each in position_pos_values:
                 f.write(str(each)+'\n')
-        with open('./visulization/%s+%s+position_neg_value.txt'%(DOMAIN1,DOMAIN2),'a+') as f:
+        with open('./visualization/%s+%s/position_neg_value.txt'%(DOMAIN1,DOMAIN2),'a+') as f:
             for each in position_neg_values:
                 f.write(str(each)+'\n')
         #with open('./results/polyadg.txt','a+') as f:

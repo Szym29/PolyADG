@@ -19,6 +19,7 @@ os.system("python deeppolya.py --d1 3 --d2 4 --d3 1 --d4 2")
 
 
 #san.py
+#special virtual environment maybe needed by SANPolyA like specific version of tensorflow V1. Please contact their authors for more info.
 os.system("python san.py --d1 1 --d2 2 --d3 3 --d4 4")
 os.system("python san.py --d1 1 --d2 3 --d3 2 --d4 4")
 os.system("python san.py --d1 1 --d2 4 --d3 2 --d4 3")
@@ -27,8 +28,8 @@ os.system("python san.py --d1 2 --d2 4 --d3 1 --d4 3")
 os.system("python san.py --d1 3 --d2 4 --d3 1 --d4 2")
 
 
-#Analyse
-os.system("python Analyze.py --d1 1 --d2 2 --d3 3")
+# #Analyse
+os.system("python analyze.py --d1 1 --d2 2 --d3 3")
 os.system("python Analyze.py --d1 1 --d2 3 --d3 2")
 os.system("python Analyze.py --d1 2 --d2 3 --d3 1")
 

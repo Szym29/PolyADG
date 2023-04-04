@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from SANPolyA import *
 import numpy as np
-import tensorflow.compat.v1 as tf
+import tensorflow as tf
 from six.moves import cPickle as pickle
 import sys, os
 from decimal import Decimal
@@ -282,8 +282,8 @@ if args.d1== 2:
     D1_NEG_PATH ='data/mouse/bl_mouse/negative/'
 if args.d1== 3:
     DOMAIN1='rat'
-    D1_NEG_PATH = 'data/rat/negative/'
-    D1_POS_PATH = 'data/rat/positive/'
+    D1_NEG_PATH = 'data/no_rat/negative/'
+    D1_POS_PATH = 'data/no_rat/positive/'
 if args.d1== 4:
     DOMAIN1='bovine'
     D1_NEG_PATH = 'data/bovine/negative/'
@@ -298,8 +298,8 @@ if args.d2== 2:
     D2_NEG_PATH ='data/mouse/bl_mouse/negative/'
 if args.d2== 3:
     DOMAIN2='rat'
-    D2_NEG_PATH = 'data/rat/negative/'
-    D2_POS_PATH = 'data/rat/positive/'
+    D2_NEG_PATH = 'data/no_rat/negative/'
+    D2_POS_PATH = 'data/no_rat/positive/'
 if args.d2== 4:
     DOMAIN2='bovine'
     D2_NEG_PATH = 'data/bovine/negative/'
@@ -314,8 +314,8 @@ if args.d3== 2:
     D3_NEG_PATH ='data/mouse/bl_mouse/negative/'
 if args.d3== 3:
     DOMAIN3='rat'
-    D3_NEG_PATH = 'data/rat/negative/'
-    D3_POS_PATH = 'data/rat/positive/'
+    D3_NEG_PATH = 'data/no_rat/negative/'
+    D3_POS_PATH = 'data/no_rat/positive/'
 if args.d3== 4:
     DOMAIN3='bovine'
     D3_NEG_PATH = 'data/bovine/negative/'
@@ -330,8 +330,8 @@ if args.d4== 2:
     D4_NEG_PATH ='data/mouse/bl_mouse/negative/'
 if args.d4== 3:
     DOMAIN4='rat'
-    D4_NEG_PATH = 'data/rat/negative/'
-    D4_POS_PATH = 'data/rat/positive/'
+    D4_NEG_PATH = 'data/no_rat/negative/'
+    D4_POS_PATH = 'data/no_rat/positive/'
 if args.d4== 4:
     DOMAIN4='bovine'
     D4_NEG_PATH = 'data/bovine/negative/'
